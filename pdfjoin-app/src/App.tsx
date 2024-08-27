@@ -20,19 +20,19 @@ const DraggableFile: React.FC<{
   useEffect(() => {
     const generatePreview = async () => {
       try {
-        const arrayBuffer = await file.file.arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer);
-        const pages = pdf.getPages();
-        if (pages.length > 0) {
-          const pngImage = await pages[0].exportAsPng({ scale: 0.5 });
-          const blob = new Blob([pngImage], { type: "image/png" });
-          setPreview(URL.createObjectURL(blob));
-        }
+        const fileUrl = URL.createObjectURL(file.file);
+        setPreview(fileUrl);
       } catch (error) {
         console.error("Error generating preview:", error);
       }
     };
     generatePreview();
+
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
   }, [file]);
 
   const [{ isDragging }, drag] = useDrag({
@@ -61,11 +61,13 @@ const DraggableFile: React.FC<{
       } w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/6`}
     >
       {preview ? (
-        <img
-          src={preview}
-          alt={file.file.name}
+        <object
+          data={preview}
+          type="application/pdf"
           className="w-full h-40 object-contain mb-2 rounded"
-        />
+        >
+          <p>PDF preview not available</p>
+        </object>
       ) : (
         <div className="w-full h-40 bg-gray-700 flex items-center justify-center mb-2 rounded">
           <span>Loading preview...</span>
